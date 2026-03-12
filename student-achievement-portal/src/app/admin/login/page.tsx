@@ -1,83 +1,81 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { supabase } from "@/lib/supabaseClient"
+import { useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
+import { useRouter } from "next/navigation";
 
 export default function AdminLogin() {
-  const router = useRouter()
+  const router = useRouter();
 
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+  const login = async () => {
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
-    })
+    });
 
     if (error) {
-      alert(error.message)
-      setLoading(false)
-      return
+      alert(error.message);
+      return;
     }
 
-    router.push("/admin")
-  }
+    const user = data.user;
+
+    // Check role in users table
+    const { data: profile, error: roleError } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (roleError) {
+      alert("Error checking admin role");
+      return;
+    }
+
+    if (profile.role !== "admin" && profile.role !== "head_admin") {
+      alert("You are not authorized as admin");
+      return;
+    }
+
+    // Redirect to admin dashboard
+    router.push("/admin/dashboard");
+  };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-100">
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
 
-      <div className="w-full max-w-md bg-white p-10 rounded-2xl shadow-xl">
+      <div className="bg-white p-8 rounded-xl shadow-lg w-96 space-y-4">
 
-        <h2 className="text-3xl font-bold text-center text-gray-800 mb-2">
-          Admin Portal
+        <h2 className="text-2xl font-bold text-center">
+          Admin Login
         </h2>
 
-        <p className="text-center text-gray-500 mb-8">
-          Login to manage student achievements
-        </p>
+        <input
+          className="border w-full p-3 rounded"
+          placeholder="Admin Email"
+          onChange={(e) => setEmail(e.target.value)}
+        />
 
-        <form onSubmit={handleLogin} className="space-y-5">
+        <input
+          type="password"
+          className="border w-full p-3 rounded"
+          placeholder="Password"
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
-          <input
-            type="email"
-            placeholder="Admin Email"
-            className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-
-          <input
-            type="password"
-            placeholder="Password"
-            className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 transition duration-200"
-          >
-            {loading ? "Logging in..." : "Login"}
-          </button>
-
-        </form>
-
-        <p className="text-center text-sm text-gray-400 mt-6">
-          Student Achievement Verification System
-        </p>
+        <button
+          onClick={login}
+          className="bg-green-600 text-white w-full py-3 rounded hover:bg-green-700"
+        >
+          Login
+        </button>
 
       </div>
 
     </div>
-  )
+  );
 }

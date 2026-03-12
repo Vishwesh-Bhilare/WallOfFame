@@ -1,33 +1,135 @@
-export default function NewAchievement() {
-  return (
-    <div className="p-10">
-      <h1 className="text-3xl font-bold mb-6">Submit Achievement</h1>
+"use client"
 
-      <form className="space-y-4 bg-white p-6 rounded shadow max-w-lg">
-        <input
-          type="text"
-          placeholder="Title"
-          className="w-full border p-2"
-        />
+import { useState } from "react"
+import { supabase } from "@/lib/supabaseClient"
 
-        <select className="w-full border p-2">
-          <option>Publication</option>
-          <option>Hackathon</option>
-          <option>Patent</option>
-          <option>Copyright</option>
-        </select>
+export default function AchievementForm() {
 
-        <textarea
-          placeholder="Description"
-          className="w-full border p-2"
-        />
+const [type,setType] = useState("Patent")
+const [title,setTitle] = useState("")
+const [rank,setRank] = useState("")
+const [github,setGithub] = useState("")
+const [youtube,setYoutube] = useState("")
+const [description,setDescription] = useState("")
+const [file,setFile] = useState<File | null>(null)
 
-        <input type="file" className="w-full" />
+const submitAchievement = async (e:any) => {
 
-        <button className="bg-blue-600 text-white px-4 py-2 rounded">
-          Submit
-        </button>
-      </form>
-    </div>
-  );
+e.preventDefault() // 🔴 VERY IMPORTANT
+
+console.log("Submitting achievement...")
+
+const { data:{user} } = await supabase.auth.getUser()
+
+if(!user){
+alert("User not logged in")
+return
+}
+
+let certificate = ""
+
+if(file){
+
+const { data,error } = await supabase.storage
+.from("certificates")
+.upload(`proof-${Date.now()}-${file.name}`,file)
+
+if(error){
+console.log(error)
+alert(error.message)
+return
+}
+
+certificate = data.path
+}
+
+const { error } = await supabase
+.from("achievements")
+.insert({
+user_id:user.id,
+title,
+type,
+rank,
+github,
+youtube,
+description,
+certificate,
+status:"pending"
+})
+
+if(error){
+console.log(error)
+alert(error.message)
+return
+}
+
+alert("Achievement submitted successfully")
+
+}
+
+return (
+
+<form
+onSubmit={submitAchievement}
+className="space-y-4"
+>
+
+<select
+value={type}
+onChange={(e)=>setType(e.target.value)}
+className="w-full border p-3 rounded"
+>
+
+<option>Hackathon</option>
+<option>Patent</option>
+<option>Course Completion</option>
+<option>Extra Curricular</option>
+
+</select>
+
+<input
+placeholder="Achievement Title"
+className="w-full border p-3 rounded"
+onChange={(e)=>setTitle(e.target.value)}
+/>
+
+<input
+placeholder="Rank / Patent Number"
+className="w-full border p-3 rounded"
+onChange={(e)=>setRank(e.target.value)}
+/>
+
+<input
+placeholder="Github Link"
+className="w-full border p-3 rounded"
+onChange={(e)=>setGithub(e.target.value)}
+/>
+
+<input
+placeholder="Youtube Demo"
+className="w-full border p-3 rounded"
+onChange={(e)=>setYoutube(e.target.value)}
+/>
+
+<textarea
+placeholder="Description"
+className="w-full border p-3 rounded"
+onChange={(e)=>setDescription(e.target.value)}
+/>
+
+<input
+type="file"
+onChange={(e)=>setFile(e.target.files?.[0] || null)}
+/>
+
+<button
+type="submit"
+className="bg-green-600 text-white px-6 py-2 rounded"
+>
+Submit
+</button>
+
+</form>
+
+)
 }

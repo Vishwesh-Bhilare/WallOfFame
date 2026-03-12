@@ -30,19 +30,24 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-md">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-100">
 
-        <h2 className="text-2xl font-bold text-center mb-6">
-          Admin Login
+      <div className="w-full max-w-md bg-white p-10 rounded-2xl shadow-xl">
+
+        <h2 className="text-3xl font-bold text-center text-gray-800 mb-2">
+          Admin Portal
         </h2>
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        <p className="text-center text-gray-500 mb-8">
+          Login to manage student achievements
+        </p>
+
+        <form onSubmit={handleLogin} className="space-y-5">
 
           <input
             type="email"
-            placeholder="Email"
-            className="w-full border p-3 rounded"
+            placeholder="Admin Email"
+            className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -51,7 +56,7 @@ export default function AdminLogin() {
           <input
             type="password"
             placeholder="Password"
-            className="w-full border p-3 rounded"
+            className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -60,14 +65,19 @@ export default function AdminLogin() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700"
+            className="w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 transition duration-200"
           >
             {loading ? "Logging in..." : "Login"}
           </button>
 
         </form>
 
+        <p className="text-center text-sm text-gray-400 mt-6">
+          Student Achievement Verification System
+        </p>
+
       </div>
+
     </div>
   )
 }

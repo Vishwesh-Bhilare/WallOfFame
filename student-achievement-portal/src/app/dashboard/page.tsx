@@ -21,36 +21,65 @@ export default function Dashboard() {
   }, [])
 
   const fetchAchievements = async () => {
+
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return
+
     const { data } = await supabase
       .from("achievements")
       .select("*")
-      .order("created_at", { ascending: false })
+      .eq("user_id", user.id)
+      .order("submitted_at", { ascending: false })
 
     if (data) setAchievements(data)
   }
 
   const submitAchievement = async () => {
 
-    let fileUrl = ""
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (file) {
-      const { data } = await supabase.storage
-        .from("certificates")
-        .upload(`proof-${Date.now()}`, file)
-
-      fileUrl = data?.path || ""
+    if (!user) {
+      alert("User not logged in")
+      return
     }
 
-    await supabase.from("achievements").insert({
-      title,
-      type,
-      rank,
-      github,
-      youtube,
-      description,
-      proof: fileUrl,
-      status: "pending"
-    })
+    let certificateUrl = ""
+
+    if (file) {
+      const { data, error } = await supabase.storage
+        .from("certificates")
+        .upload(`cert-${Date.now()}-${file.name}`, file)
+
+      if (error) {
+        console.error(error)
+        alert("File upload failed")
+        return
+      }
+
+      certificateUrl = data.path
+    }
+
+    const { error } = await supabase
+      .from("achievements")
+      .insert({
+        user_id: user.id,
+        title: title,
+        type: type,
+        event_name: title,
+        rank: rank,
+        github: github,
+        youtube: youtube,
+        description: description,
+        certificate: certificateUrl,
+        status: "pending"
+      })
+
+    if (error) {
+      console.error(error)
+      alert("Insert failed")
+      return
+    }
 
     alert("Submitted for admin approval")
 
@@ -65,16 +94,12 @@ export default function Dashboard() {
         My Achievements
       </h1>
 
-      {/* Submit Button */}
-
       <button
         onClick={() => setShowForm(true)}
         className="mb-8 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
       >
         + Submit Achievement
       </button>
-
-      {/* Achievements List */}
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
 
@@ -105,8 +130,6 @@ export default function Dashboard() {
 
       </div>
 
-      {/* Modal Form */}
-
       {showForm && (
 
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
@@ -116,8 +139,6 @@ export default function Dashboard() {
             <h2 className="text-2xl font-bold mb-6">
               Submit Achievement
             </h2>
-
-            {/* Type */}
 
             <select
               value={type}
@@ -129,8 +150,6 @@ export default function Dashboard() {
               <option>Course Completion</option>
               <option>Extra Curricular Activity</option>
             </select>
-
-            {/* Dynamic Fields */}
 
             <input
               type="text"
@@ -176,8 +195,6 @@ export default function Dashboard() {
               className="w-full border p-3 rounded-lg mb-4"
               onChange={(e) => setDescription(e.target.value)}
             />
-
-            {/* File Upload */}
 
             <input
               type="file"
